@@ -1,0 +1,64 @@
+\documentclass{article}
+\usepackage[utf8]{inputenc}
+\usepackage[]{amsmath}
+\usepackage[]{amsfonts}
+\usepackage{mathtools}
+
+\title{Shear}
+\author{Caio Lima de Oliveira}
+\date{July 2022}
+
+\begin{document}
+
+\maketitle
+
+\section{Ellipticities}
+
+We may define two complex ellipticities, where the real and complex components define the ellipticity component along a Cartesian coordinate frame:
+
+\begin{align}
+    \chi &= \frac{Q_{11} - Q_{22} + 2iQ_{12}}{Q_{11} + Q_{22}} &  \epsilon &= \frac{Q_{11} - Q_{22} + 29 Q_{12}}{Q_{11} + Q_{22} + 2(Q_{11} Q_{22} - Q_{12}^2)^{1/2}}
+\end{align}
+
+\noindent where $Q_{ij}$ is the second brightness moment, given by
+
+\begin{align}
+    Q_{ij} = \frac{\int d^2 \theta I (\boldsymbol{\theta}) q_{I}[I(\boldsymbol{\theta})] (\theta_i - \bar{\theta}_i)(\theta_j - \bar{\theta}_j) }{\int d^2 \theta I(\boldsymbol{\theta}) q_{I} [I(\boldsymbol{\theta})]}
+\end{align}
+
+\noindent with
+
+\begin{align}
+    \bar{\boldsymbol{\theta}} = \frac{\int d^2 \theta I(\boldsymbol{\theta}) q_{I} [I(\boldsymbol{\theta})] \boldsymbol{\theta}}{\int d^2 \theta I(\boldsymbol{\theta}) q_{I} [I(\boldsymbol{\theta})]}
+\end{align}
+
+
+The unlensed ellipticities are related to the reduced shear through the transformations
+
+\begin{align}
+    \chi^{(s)} &= \frac{\chi - 2g + g^2\chi^*}{1 + |g|^2 - 2 \text{Re}(g\chi^*)}; &  \epsilon^{(s)} & = \begin{cases}
+                  \frac{\epsilon - g}{1 - g^* \epsilon} & \text{if } |g| \leq 1; \\
+                  \frac{1 - g\epsilon^*}{\epsilon^* - g^*} & \text{if } |g| > 1.
+              \end{cases}
+\end{align}
+
+\noindent while the inverse transformations are given by 
+
+\begin{align}
+    \chi &= \frac{\chi^{(s)} + 2g + g^2\chi^{(s)*}}{1 + |g|^2 + 2 \text{Re}(g\chi^{(s)*})}; &  \epsilon & = \begin{cases}
+        \frac{\epsilon^{(s)} + g}{1 + g^* \epsilon^{(s)}} & \text{if } |g| \leq 1; \\
+        \frac{1 + g\epsilon^{(s)*}}{\epsilon^{(s)*} + g^*} & \text{if } |g| > 1.
+    \end{cases}
+\end{align}
+
+\section{Tangential and Cross Components}
+
+An angle $\phi$ in the Cartesian coordinate frame specifies a direction, along which we may define tangential and cross components:
+
+\begin{align}
+    \epsilon_t &= - \text{Re} (\epsilon e^{-2i\phi}), & \epsilon_\times = - \text{Im} (\epsilon e^{-2i\phi})
+\end{align}
+
+\noindent the shear $\gamma$, related to the reduced shear through $g = \gamma / (1 - \kappa)$, where $\kappa$ is the magnification, transforms in the same way. Note the factor `2' in the phase, which is there because of the fact that an ellipse transforms into itself after a 180$^\circ$ rotation.
+
+\end{document}
