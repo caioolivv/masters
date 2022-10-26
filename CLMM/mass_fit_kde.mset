@@ -29,7 +29,7 @@ sparam-array={'NcmSParam': {'name': <'H0'>, 'symbol': <'H_0'>, 'lower-bound': <3
 #  Model reparametrization
 #
 #
-reparam={'NcHICosmoDEReparamOk', {'length': <uint32 13>, 'params-desc': <{uint32 2: {'NcmSParam', {'name': <'Omegak'>, 'symbol': <'\\Omega_{k0}'>, 'lower-bound': <-0.5>, 'upper-bound': <0.5>, 'scale': <0.01>, 'absolute-tolerance': <0.0>, 'default-value': <0.0>, 'fit-type': <1>}}}>, 'compat-type': <'NcHICosmoDE'>}}
+reparam={'NcHICosmoDEReparamOk', {'length': <uint32 13>, 'params-desc': <{uint32 2: {'NcmSParam', {'name': <'Omegak'>, 'symbol': <'\\Omega_{k0}'>, 'lower-bound': <-0.29999999999999999>, 'upper-bound': <0.29999999999999999>, 'scale': <0.01>, 'absolute-tolerance': <0.0>, 'default-value': <0.0>, 'fit-type': <1>}}}>, 'compat-type': <'NcHICosmoDE'>}}
 ################################################################################
 #
 #  H_0
