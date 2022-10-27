@@ -29,7 +29,6 @@ from chainconsumer import ChainConsumer
 import matplotlib.pyplot as plt
 
 plt.rcParams['text.latex.preamble'] = [r'\usepackage{pxfonts, mathpazo}']
-plt.rcParams['font.family']=['Palatino']
 plt.rc('text', usetex=True)
 
 np.random.seed(0)
@@ -43,7 +42,7 @@ ngals         = 10000 # Number of galaxies
 Delta         = 200   # Overdensity parameter definition NFW profile
 cluster_ra    = 0.0   # Cluster right ascension
 cluster_dec   = 0.0   # Cluster declination
-shapenoise    = [1e-2, 1e-3]  # True ellipticity standard variation
+shapenoise    = [1e-1, 1e-2, 1e-3]  # True ellipticity standard variation
 
 # Create galaxy catalog and Cluster object
 
@@ -126,16 +125,24 @@ for sn in shapenoise:
     rows = np.array([mcat.peek_row(i).dup_array() for i in range(nwalkers * 10, mcat.len())])
     params = ["$" + mcat.col_symb(i) + "$" for i in range (mcat.ncols())]
 
-    partial = ChainConsumer()
-    partial.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$", statistics="max")
-    partial.configure(spacing=0.0, usetex=True, colors='#D62728', shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=True, kde=True, legend_color_text=False, linewidths=2)
+    # partial = ChainConsumer()
+    # partial.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
+    # partial.configure(spacing=0.0, usetex=True, colors='#D62728', shade=True, shade_alpha=0.2, bar_shade=True, smooth=True, kde=True, legend_color_text=False, linewidths=2)
 
-    partial.plotter.plot(filename=f"Plots/MCMC/KDE_lh_corner_{sn}.png", figsize=(16, 16), truth=[4, 15])
-    partial.plotter.plot(filename=f"Plots/MCMC/KDE_lh_corner_{sn}.pdf", figsize=(16, 16), truth=[4, 15])
+    # CC_fig = partial.plotter.plot(figsize=(8, 8), truth=[4, 15])
+
+    # fig = plt.figure(num=CC_fig, figsize=(8,8), dpi=300, facecolor="white")
+    # fig.savefig(f"Plots/MCMC/KDE_lh_corner_{sn}.png")
 
 
-    total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$", statistics="max")
+    total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
 
-total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4'], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True], kde=[True, True], legend_color_text=False, linewidths=[2, 2])
-total.plotter.plot(filename=f"Plots/MCMC/KDE_lh_corner.png", figsize=(16, 16), truth=[4, 15])
-total.plotter.plot(filename=f"Plots/MCMC/KDE_lh_corner.pdf", figsize=(16, 16), truth=[4, 15])
+total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD"], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True, True,], kde=[True, True, True], legend_color_text=False, linewidths=[3, 2, 1], linestyles=["-", "-", "-"])
+
+total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15])
+fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
+
+total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = 0.01$", f"$\sigma_{{\epsilon^s}} = 0.001$"])
+fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
