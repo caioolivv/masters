@@ -43,6 +43,7 @@ Delta         = 200   # Overdensity parameter definition NFW profile
 cluster_ra    = 0.0   # Cluster right ascension
 cluster_dec   = 0.0   # Cluster declination
 shapenoise    = [1e-1, 1e-2, 1e-3]  # True ellipticity standard variation
+# shapenoise    = [0.05]  # True ellipticity standard variation
 
 # Create galaxy catalog and Cluster object
 
@@ -92,17 +93,20 @@ for sn in shapenoise:
     mset.param_set_ftype (cDelta_pi.mid, cDelta_pi.pid, Ncm.ParamType.FREE)
     mset.prepare_fparam_map ()
 
-    data = mock.generate_galaxy_catalog(cluster_m, cluster_z, concentration, cosmo, "chang13", zsrc_min = cluster_z + 0.1, shapenoise=sn, ngals=ngals, cluster_ra=cluster_ra, cluster_dec=cluster_dec)
+    data = mock.generate_galaxy_catalog(cluster_m, cluster_z, concentration, cosmo, "chang13", zsrc_min = cluster_z + 0.1, shapenoise=sn, photoz_sigma_unscaled=0.05, ngals=ngals, cluster_ra=cluster_ra, cluster_dec=cluster_dec)
     gc = clmm.GalaxyCluster("CL_noisy_z", cluster_ra, cluster_dec, cluster_z, data)
     gc.compute_tangential_and_cross_components(geometry="flat")
 
     ggt = create_nc_data_cluster_wl (gc.galcat['theta'], gc.galcat['et'], gc.galcat['z'], cluster_z, cosmo, cosmo.dist, sigma_g=sn)
     fit = create_fit_obj ([ggt], mset)
-    fit.run (Ncm.FitRunMsgs.FULL)
+    fit.run (Ncm.FitRunMsgs.SIMPLE)
     fit.obs_fisher ()
     fit.log_info ()
     fit.log_covar ()
-    Ncm.func_eval_set_max_threads (6)
+
+    print(10**mset.param_get(MDelta_pi.mid, MDelta_pi.pid))
+
+    Ncm.func_eval_set_max_threads (4)
     Ncm.func_eval_log_pool_stats ()
 
     init_sampler = Ncm.MSetTransKernGauss.new (0)
@@ -112,7 +116,7 @@ for sn in shapenoise:
 
     nwalkers = 200
     stretch = Ncm.FitESMCMCWalkerAPES.new (nwalkers, mset.fparams_len ())
-    esmcmc  = Ncm.FitESMCMC.new (fit, nwalkers, init_sampler, stretch, Ncm.FitRunMsgs.FULL)
+    esmcmc  = Ncm.FitESMCMC.new (fit, nwalkers, init_sampler, stretch, Ncm.FitRunMsgs.SIMPLE)
     esmcmc.set_data_file (f"Fits/KDE_lh_{sn}.fits")
     esmcmc.set_auto_trim_div (100)
     esmcmc.set_max_runs_time (2.0 * 60.0)
