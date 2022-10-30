@@ -117,7 +117,7 @@ for sn in shapenoise:
     nwalkers = 200
     stretch = Ncm.FitESMCMCWalkerAPES.new (nwalkers, mset.fparams_len ())
     esmcmc  = Ncm.FitESMCMC.new (fit, nwalkers, init_sampler, stretch, Ncm.FitRunMsgs.SIMPLE)
-    esmcmc.set_data_file (f"Fits/KDE_lh_{sn}.fits")
+    esmcmc.set_data_file (f"Fits/CLMM_lh_{sn}.fits")
     esmcmc.set_auto_trim_div (100)
     esmcmc.set_max_runs_time (2.0 * 60.0)
     esmcmc.set_nthreads(4)
@@ -145,8 +145,8 @@ total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD
 
 total_fig = total.plotter.plot(figsize=(8,8), truth=[4, 15])
 fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
+fig.savefig(f"Plots/MCMC/CLMM_lh_corner.png")
 
 total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
 fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
+fig.savefig(f"Plots/MCMC/CLMM_lh_corner_zoom.png")

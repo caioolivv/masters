@@ -47,36 +47,59 @@ shapenoise    = [0.2, 0.05, 0.01]  # True ellipticity standard variation
 
 # Create galaxy catalog and Cluster object
 
-def create_nc_data_cluster_wl (theta, g_t, z_source, z_cluster, cosmo, dist, sigma_z = None, sigma_g = None):
-    r  = clmm.convert_units (theta, "radians", "Mpc", redshift = z_cluster, cosmo = cosmo)
-    ga = Ncm.ObjArray.new ()
+class GaussGammaTErr (Ncm.DataGaussDiag):
+    z_cluster = GObject.Property (type = float, flags = GObject.PARAM_READWRITE)
+    z_source  = GObject.Property (type = Ncm.Vector, flags = GObject.PARAM_READWRITE)
+    r_source  = GObject.Property (type = Ncm.Vector, flags = GObject.PARAM_READWRITE)
+    z_err     = GObject.Property (type = Ncm.Vector, flags = GObject.PARAM_READWRITE)
+
+    def __init__ (self):
+        Ncm.DataGaussDiag.__init__ (self, n_points = 0)        
+        self.moo = clmm.Modeling ()
     
-    sigma_g = 1.0e-4 if not sigma_g else sigma_g
-    m_obs = np.column_stack ((r, g_t, np.repeat (sigma_g, len (r))))
+    def init_from_data (self, z_cluster, r_source, z_source, gt_profile, gt_err, z_err = None, moo = None):
+        
+        if moo:
+            self.moo = moo
+        
+        assert len (gt_profile) == len (z_source)
+        assert len (gt_profile) == len (r_source)
+        assert len (gt_profile) == len (gt_err)
+        
+        self.set_size (len (gt_profile))
+        
+        self.props.z_cluster = z_cluster
+        self.props.z_source  = Ncm.Vector.new_array (z_source)
+        self.props.r_source  = Ncm.Vector.new_array (r_source)
+        if z_err:
+            self.props.r_source  = Ncm.Vector.new_array (z_err)
+                
+        self.y.set_array (gt_profile)
+        
+        self.sigma.set_array (gt_err) # Diagonal covariance matrix: standard deviation values in gt_err.
+
+        
+        self.set_init (True)        
     
-    grsg = Nc.GalaxyWLReducedShearGauss (pos = Nc.GalaxyWLReducedShearGaussPos.R)
-    grsg.set_obs (Ncm.Matrix.new_array (m_obs.flatten (), 3))
-    
+    # Once the NcmDataGaussDiag is initialized, its parent class variable np is set with the n_points value.
+    def do_get_length (self):
+        return self.np
 
-    gzgs = Nc.GalaxyRedshiftSpec ()
-    gzgs.set_z (Ncm.Vector.new_array (z_source))
+    def do_get_dof (self):
+        return self.np
 
-    gwl  = Nc.GalaxyWL (wl_dist = grsg, gz_dist = gzgs)
-    ga.add (gwl)
+    def do_begin (self):
+        pass
 
-    nc_dcwl = Nc.DataClusterWL (galaxy_array = ga, z_cluster = z_cluster)
-    nc_dcwl.set_init (True)
-    
-    return nc_dcwl
+    def do_prepare (self, mset):
+        self.moo.set_mset (mset)
+        
+    def do_mean_func (self, mset, vp):
+        vp.set_array (self.moo.eval_reduced_tangential_shear (self.props.r_source.dup_array (), self.props.z_cluster, self.props.z_source.dup_array ()))
+        return
 
-def create_fit_obj (data_array, mset):
-    dset = Ncm.Dataset.new ()
-    for data in data_array:
-        dset.append_data (data)
-    lh = Ncm.Likelihood.new (dset)
-    fit = Ncm.Fit.new (Ncm.FitType.NLOPT, "ln-neldermead", lh, mset, Ncm.FitGradType.NUMDIFF_FORWARD)
+GObject.type_register (GaussGammaTErr)
 
-    return fit
 
 total = ChainConsumer()
 
@@ -96,9 +119,16 @@ for sn in shapenoise:
     data = mock.generate_galaxy_catalog(cluster_m, cluster_z, concentration, cosmo, "chang13", zsrc_min = cluster_z + 0.1, shapenoise=sn, ngals=ngals, cluster_ra=cluster_ra, cluster_dec=cluster_dec)
     gc = clmm.GalaxyCluster("CL_noisy_z", cluster_ra, cluster_dec, cluster_z, data)
     gc.compute_tangential_and_cross_components(geometry="flat")
+    gc.make_radial_profile("Mpc", da.make_bins(0.7, 4, 30), cosmo=cosmo)
 
-    ggt = create_nc_data_cluster_wl (gc.galcat['theta'], gc.galcat['et'], gc.galcat['z'], cluster_z, cosmo, cosmo.dist, sigma_g=sn)
-    fit = create_fit_obj ([ggt], mset)
+    ggt = GaussGammaTErr ()
+    ggt.init_from_data (z_cluster = cluster_z, r_source = gc.profile['radius'], z_source = gc.profile['z'], gt_profile = gc.profile['gt'], gt_err = gc.profile['gt_err'], moo = moo)
+
+    dset = Ncm.Dataset.new ()
+    dset.append_data (ggt)
+    lh = Ncm.Likelihood.new (dset)
+
+    fit = Ncm.Fit.new (Ncm.FitType.NLOPT, "ln-neldermead", lh, mset, Ncm.FitGradType.NUMDIFF_FORWARD)
     fit.run (Ncm.FitRunMsgs.SIMPLE)
     fit.obs_fisher ()
     fit.log_info ()
@@ -117,7 +147,7 @@ for sn in shapenoise:
     nwalkers = 200
     stretch = Ncm.FitESMCMCWalkerAPES.new (nwalkers, mset.fparams_len ())
     esmcmc  = Ncm.FitESMCMC.new (fit, nwalkers, init_sampler, stretch, Ncm.FitRunMsgs.SIMPLE)
-    esmcmc.set_data_file (f"Fits/KDE_lh_{sn}.fits")
+    esmcmc.set_data_file (f"Fits/CLMM_binned_{sn}.fits")
     esmcmc.set_auto_trim_div (100)
     esmcmc.set_max_runs_time (2.0 * 60.0)
     esmcmc.set_nthreads(4)
@@ -145,8 +175,8 @@ total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD
 
 total_fig = total.plotter.plot(figsize=(8,8), truth=[4, 15])
 fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
+fig.savefig(f"Plots/MCMC/CLMM_binned_corner.png")
 
 total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
 fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
+fig.savefig(f"Plots/MCMC/CLMM_binned_corner_zoom.png")
