@@ -42,8 +42,8 @@ ngals         = 10000 # Number of galaxies
 Delta         = 200   # Overdensity parameter definition NFW profile
 cluster_ra    = 0.0   # Cluster right ascension
 cluster_dec   = 0.0   # Cluster declination
-shapenoise    = [0.2, 0.05, 0.01]  # True ellipticity standard variation
-# shapenoise    = [0.05]  # True ellipticity standard variation
+# shapenoise    = [0.2, 0.05, 0.01]  # True ellipticity standard variation
+shapenoise    = [0.05]  # True ellipticity standard variation
 
 # Create galaxy catalog and Cluster object
 
@@ -54,7 +54,7 @@ def create_nc_data_cluster_wl (theta, g_t, z_source, z_cluster, cosmo, dist, sig
     sigma_g = 1.0e-4 if not sigma_g else sigma_g
     m_obs = np.column_stack ((r, g_t, np.repeat (sigma_g, len (r))))
     
-    grsg = Nc.GalaxyWLReducedShearGauss (pos = Nc.GalaxyWLReducedShearGaussPos.R)
+    grsg = Nc.GalaxyWLEllipticityKDE ()
     grsg.set_obs (Ncm.Matrix.new_array (m_obs.flatten (), 3))
     
 
@@ -78,7 +78,7 @@ def create_fit_obj (data_array, mset):
 
     return fit
 
-total = ChainConsumer()
+# total = ChainConsumer()
 
 for sn in shapenoise:
 
@@ -125,9 +125,9 @@ for sn in shapenoise:
     esmcmc.run(10000/nwalkers)
     esmcmc.end_run()
 
-    mcat = esmcmc.peek_catalog()
-    rows = np.array([mcat.peek_row(i).dup_array() for i in range(nwalkers * 10, mcat.len())])
-    params = ["$" + mcat.col_symb(i) + "$" for i in range (mcat.ncols())]
+    # mcat = esmcmc.peek_catalog()
+    # rows = np.array([mcat.peek_row(i).dup_array() for i in range(nwalkers * 10, mcat.len())])
+    # params = ["$" + mcat.col_symb(i) + "$" for i in range (mcat.ncols())]
 
     # partial = ChainConsumer()
     # partial.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
@@ -139,14 +139,14 @@ for sn in shapenoise:
     # fig.savefig(f"Plots/MCMC/KDE_lh_corner_{sn}.png")
 
 
-    total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
+#     total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
 
-total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD"], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True, True,], kde=[True, True, True], legend_color_text=False, linewidths=[3, 2, 1], linestyles=["-", "-", "-"], sigmas=[1,2])
+# total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD"], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True, True,], kde=[True, True, True], legend_color_text=False, linewidths=[3, 2, 1], linestyles=["-", "-", "-"], sigmas=[1,2])
 
-total_fig = total.plotter.plot(figsize=(8,8), truth=[4, 15])
-fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
+# total_fig = total.plotter.plot(figsize=(8,8), truth=[4, 15])
+# fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+# fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
 
-total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
-fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
+# total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
+# fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+# fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
