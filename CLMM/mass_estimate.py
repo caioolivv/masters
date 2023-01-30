@@ -35,15 +35,15 @@ np.random.seed(0)
 # Define cosmological parameters
 cosmo = Cosmology(H0 = 70.0, Omega_dm0 = 0.27 - 0.045, Omega_b0 = 0.045, Omega_k0 = 0.0)
     
-cluster_m     = 1.e15 # Cluster mass
+cluster_m     = 1e15  # Cluster mass
 cluster_z     = 0.4   # Cluster redshift
-concentration = 4     # Concentrion parameter NFW profile
+concentration = 4   # Concentrion parameter NFW profile
 ngals         = 10000 # Number of galaxies
 Delta         = 200   # Overdensity parameter definition NFW profile
 cluster_ra    = 0.0   # Cluster right ascension
 cluster_dec   = 0.0   # Cluster declination
-# shapenoise    = [0.2, 0.05, 0.01]  # True ellipticity standard variation
-shapenoise    = [0.05]  # True ellipticity standard variation
+shapenoise    = [0.2, 0.05, 0.01]  # True ellipticity standard variation
+# shapenoise    = [0.05]  # True ellipticity standard variation
 
 # Create galaxy catalog and Cluster object
 
@@ -78,7 +78,7 @@ def create_fit_obj (data_array, mset):
 
     return fit
 
-# total = ChainConsumer()
+total = ChainConsumer()
 
 for sn in shapenoise:
 
@@ -106,7 +106,7 @@ for sn in shapenoise:
 
     print(10**mset.param_get(MDelta_pi.mid, MDelta_pi.pid))
 
-    Ncm.func_eval_set_max_threads (4)
+    Ncm.func_eval_set_max_threads (6)
     Ncm.func_eval_log_pool_stats ()
 
     init_sampler = Ncm.MSetTransKernGauss.new (0)
@@ -117,7 +117,7 @@ for sn in shapenoise:
     nwalkers = 200
     stretch = Ncm.FitESMCMCWalkerAPES.new (nwalkers, mset.fparams_len ())
     esmcmc  = Ncm.FitESMCMC.new (fit, nwalkers, init_sampler, stretch, Ncm.FitRunMsgs.SIMPLE)
-    esmcmc.set_data_file (f"Fits/KDE_lh_{sn}.fits")
+    esmcmc.set_data_file (f"Fits/KDE_test_{sn}.fits")
     esmcmc.set_auto_trim_div (100)
     esmcmc.set_max_runs_time (2.0 * 60.0)
     esmcmc.set_nthreads(4)
@@ -125,28 +125,29 @@ for sn in shapenoise:
     esmcmc.run(10000/nwalkers)
     esmcmc.end_run()
 
-    # mcat = esmcmc.peek_catalog()
-    # rows = np.array([mcat.peek_row(i).dup_array() for i in range(nwalkers * 10, mcat.len())])
-    # params = ["$" + mcat.col_symb(i) + "$" for i in range (mcat.ncols())]
+    mcat = esmcmc.peek_catalog()
+    rows = np.array([mcat.peek_row(i).dup_array() for i in range(nwalkers * 10, mcat.len())])
+    params = ["$" + mcat.col_symb(i) + "$" for i in range (mcat.ncols())]
 
-    # partial = ChainConsumer()
-    # partial.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
-    # partial.configure(spacing=0.0, usetex=True, colors='#D62728', shade=True, shade_alpha=0.2, bar_shade=True, smooth=True, kde=True, legend_color_text=False, linewidths=2)
+    partial = ChainConsumer()
+    partial.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
+    partial.configure(spacing=0.0, usetex=True, colors='#D62728', shade=True, shade_alpha=0.2, bar_shade=True, smooth=True, kde=True, legend_color_text=False, linewidths=2)
 
-    # CC_fig = partial.plotter.plot(figsize=(8, 8), truth=[4, 15])
+    CC_fig = partial.plotter.plot(figsize=(8, 8), truth=[concentration,
+                                                         np.log10(cluster_m)])
 
-    # fig = plt.figure(num=CC_fig, figsize=(8,8), dpi=300, facecolor="white")
-    # fig.savefig(f"Plots/MCMC/KDE_lh_corner_{sn}.png")
+    fig = plt.figure(num=CC_fig, figsize=(8,8), dpi=300, facecolor="white")
+    fig.savefig(f"Plots/MCMC/KDE_test_{sn}.png")
 
 
-#     total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
+    total.add_chain(rows[:,1:], parameters=params[1:], name=f"$\sigma_{{\epsilon^s}} = {sn}$")
 
-# total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD"], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True, True,], kde=[True, True, True], legend_color_text=False, linewidths=[3, 2, 1], linestyles=["-", "-", "-"], sigmas=[1,2])
+total.configure(spacing=0.0, usetex=True, colors=['#D62728', '#1F77B4', "#9467BD"], shade=True, shade_alpha=0.2, bar_shade=True, label_font_size=20, smooth=[True, True, True,], kde=[True, True, True], legend_color_text=False, linewidths=[3, 2, 1], linestyles=["-", "-", "-"], sigmas=[1,2])
 
-# total_fig = total.plotter.plot(figsize=(8,8), truth=[4, 15])
-# fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-# fig.savefig(f"Plots/MCMC/KDE_lh_corner.png")
+total_fig = total.plotter.plot(figsize=(8,8), truth=[concentration, np.log10(cluster_m)])
+fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+fig.savefig(f"Plots/MCMC/KDE_test.png")
 
-# total_fig = total.plotter.plot(figsize=(8, 8), truth=[4, 15], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
-# fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
-# fig.savefig(f"Plots/MCMC/KDE_lh_corner_zoom.png")
+total_fig = total.plotter.plot(figsize=(8, 8), truth=[concentration, np.log10(cluster_m)], chains=[f"$\sigma_{{\epsilon^s}} = {shapenoise[1]}$", f"$\sigma_{{\epsilon^s}} = {shapenoise[2]}$"])
+fig = plt.figure(num=total_fig, figsize=(8,8), dpi=300, facecolor="white")
+fig.savefig(f"Plots/MCMC/KDE_test_zoom.png")
